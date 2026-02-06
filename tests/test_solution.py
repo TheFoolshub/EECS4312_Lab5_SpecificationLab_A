@@ -1,5 +1,5 @@
-## Student Name:
-## Student ID: 
+## Student Name: Ali Ashraf
+## Student ID: 218990184
 
 """
 Public test suite for the meeting slot suggestion exercise.
@@ -64,3 +64,60 @@ def test_lunch_break_blocks_all_slots_during_lunch():
     assert "12:45" not in slots
 
 """TODO: Add at least 5 additional test cases to test your implementation."""
+"""TODO: Add at least 5 additional test cases to test your implementation."""
+
+def test_overlapping_events_are_merged():
+    """
+    Overlapping events should not create fake gaps.
+    """
+    events = [
+        {"start": "09:30", "end": "10:30"},
+        {"start": "10:00", "end": "11:00"},
+    ]
+    # Busy becomes 09:30–11:00 (+buffer => 11:15)
+    slots = suggest_slots(events, meeting_duration=30, day="Tue")
+    assert "10:15" not in slots
+    assert "11:15" in slots
+
+
+def test_back_to_back_events_block_continuously():
+    """
+    Adjacent events should behave like continuous busy time.
+    """
+    events = [
+        {"start": "09:00", "end": "10:00"},
+        {"start": "10:00", "end": "10:30"},
+    ]
+    # Busy becomes 09:00–10:30 (+buffer => 10:45)
+    slots = suggest_slots(events, meeting_duration=15, day="Mon")
+    assert "10:30" not in slots
+    assert "10:45" in slots
+
+
+def test_event_partially_outside_working_hours_is_clipped():
+    """
+    Events partly outside working hours should be clipped, not ignored.
+    """
+    events = [{"start": "08:00", "end": "09:30"}]
+    # Clipped to 09:00–09:30 (+buffer => 09:45)
+    slots = suggest_slots(events, meeting_duration=30, day="Wed")
+    assert "09:00" not in slots
+    assert "09:45" in slots
+
+
+def test_meeting_can_end_exactly_at_work_end():
+    """
+    A meeting that ends exactly at 17:00 should be allowed.
+    """
+    slots = suggest_slots([], meeting_duration=60, day="Thu")
+    assert "16:00" in slots
+    assert "16:15" not in slots  # would end at 17:15
+
+
+def test_duration_too_long_returns_empty():
+    """
+    Duration longer than the whole workday should return no slots.
+    """
+    slots = suggest_slots([], meeting_duration=8 * 60 + 1, day="Fri")
+    assert slots == []
+
