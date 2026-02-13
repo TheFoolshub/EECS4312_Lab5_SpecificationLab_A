@@ -120,4 +120,25 @@ def test_duration_too_long_returns_empty():
     """
     slots = suggest_slots([], meeting_duration=8 * 60 + 1, day="Fri")
     assert slots == []
+#addition of new requirement testing 
+def test_friday_blocks_starts_after_1500():
+    """
+    On Friday, meetings must not start after 15:00.
+    15:00 is allowed, but 15:15 and later are excluded.
+    """
+    slots = suggest_slots([], meeting_duration=30, day="Fri")
+
+    assert "15:00" in slots
+    assert "15:15" not in slots
+    assert "16:00" not in slots
+    
+def test_non_friday_allows_starts_after_1500():
+    """
+    On non-Friday days, meetings may start after 15:00
+    as long as they fit within working hours.
+    """
+    slots = suggest_slots([], meeting_duration=30, day="Thu")
+
+    assert "15:15" in slots
+    assert "16:00" in slots
 
